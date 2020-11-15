@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Place Autocomplete</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pac-card" id="pac-card">
+      <div id="pac-container">
+        <input id="pac-input" type="text"
+            placeholder="Enter Your Area">
+      </div>
+    </div>
+    
+    <div id="map"></div>
+
+    <script>
+
+      var map;
+      var markers = [];
+      var infoWindow;
+      var locationSelect;
+      var manMarker;
+      
+        
+      
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 13.0826802, lng: 80.2707184},
+          zoom: 13
+        });
+        var card = document.getElementById('pac-card');
+        var input = document.getElementById('pac-input');
+        
+        infoWindow = new google.maps.InfoWindow();
+
+        map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
+
+        var autocomplete = new google.maps.places.Autocomplete(input);
+        
+        autocomplete.setComponentRestrictions({'country': ['in', 'au']}); //Only in India
+        autocomplete.bindTo('bounds', map);
+
+
+        
+
+
+        autocomplete.addListener('place_changed', function() {
+        
+         infoWindow.close();
+         for (var i = 0; i < markers.length; i++) {
+           markers[i].setMap(null);
+         }
+         markers.length = 0;         
+
+
+        manMarker = new google.maps.Marker({
+          map: map,
+          anchorPoint: new google.maps.Point(0, -29),
+          animation: google.maps.Animation.BOUNCE,
+          icon: "https://zaitoon.online/icons/person_marker.png"
+        });
+        
+          manMarker.setVisible(false);
+          var place = autocomplete.getPlace();
+          
+          if (!place.geometry) {
+            // User entered the name of a Place that was not suggested and
+            // pressed the Enter key, or the Place Details request failed.
+            window.alert("No details available for input: '" + place.name + "'");
+            return;
+          }
+
+          // If the place has a geometry, then present it on a map.
+          if (place.geometry.viewport) {
+          console.log('Placing at random!!!!')
+            map.fitBounds(place.geometry.viewport);
+          } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);
+          }
+          manMarker.setPosition(place.geometry.location);
+          console.log(place.geometry.location.lat());
+          console.log(place.geometry.location.lng());
+          manMarker.setVisible(true);
+          
+       
+       //Call show branches function.
+       showOutlets(place.geometry.location); 
+             
+          
+
+
+        });
+        
+       
+       
+       function clearLocations() {
+         infoWindow.close();
+         for (var i = 0; i < markers.length; i++) {
+           markers[i].setMap(null);
+         }
+         markers.length = 0;
+       }
+       
+       
+	function showOutlets(center) {
+         clearLocations();
+         console.log(center)
+
+         var radius = 10; //document.getElementById('radiusSelect').value;
+         var searchUrl = 'https://zaitoon.online/services/branchlocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
+         downloadUrl(searchUrl, function(data) {
+         console.log('Called BranchLocator API : '+searchUrl)
+           var xml = parseXml(data);
+           var markerNodes = xml.documentElement.getElementsByTagName("marker");
+           var bounds = new google.maps.LatLngBounds();
+           for (var i = 0; i < markerNodes.length; i++) {
+             var id = markerNodes[i].getAttribute("id");
+             var name = markerNodes[i].getAttribute("name");
+             var address = markerNodes[i].getAttribute("address");
+             var contact = markerNodes[i].getAttribute("contact");
+             contact = (contact != null ? contact: 'care@zaitoon.online');
+             var hours = markerNodes[i].getAttribute("operationalHours");
+             hours = (hours != null ? hours: 'Not Available');
+             var distance = parseFloat(markerNodes[i].getAttribute("distance"));
+             var latlng = new google.maps.LatLng(
+                  parseFloat(markerNodes[i].getAttribute("lat")),
+                  parseFloat(markerNodes[i].getAttribute("lng")));
+
+             createMarker(latlng, name, address, hours, contact, distance);
+             bounds.extend(latlng);
+           }
+
+	var allMyMarkers = markers;
+	allMyMarkers.push(manMarker);
+	for (var i = 0; i < allMyMarkers.length; i++) {
+	 bounds.extend(allMyMarkers[i].getPosition());
+	}
+	
+	map.fitBounds(bounds);
+
+         });
+       }   
+       
+       function createMarker(latlng, name, address, hours, contact, distance) {
+       console.log('creating marker '+name)
+          var html = "<b style='color: #ed1c24'>Zaitoon " + name + "</b> <br/>" + address + "<br/>Open Hours: "+hours+"<br/> Contact "+ contact +"<br/><tag style='color: #e67e22' >"+Math.round(distance*100)/100+" km away</tag><br/><br/><button>Reserve Table</button>";
+          var zaitoonMarker = new google.maps.Marker({
+            map: map,
+            position: latlng,
+            animation: google.maps.Animation.DROP,
+            icon: "https://zaitoon.online/icons/zaitoon_marker.png"
+          });
+          google.maps.event.addListener(zaitoonMarker, 'click', function() {
+            infoWindow.setContent(html);
+            infoWindow.open(map, zaitoonMarker);
+          });
+          markers.push(zaitoonMarker);
+        }
+
+       function downloadUrl(url, callback) {
+          var request = window.ActiveXObject ?
+              new ActiveXObject('Microsoft.XMLHTTP') :
+              new XMLHttpRequest;
+
+          request.onreadystatechange = function() {
+            if (request.readyState == 4) {
+              request.onreadystatechange = doNothing;
+              callback(request.responseText, request.status);
+            }
+          };
+
+          request.open('GET', url, true);
+          request.send(null);
+       }
+
+       function parseXml(str) {
+          if (window.ActiveXObject) {
+            var doc = new ActiveXObject('Microsoft.XMLDOM');
+            doc.loadXML(str);
+            return doc;
+          } else if (window.DOMParser) {
+            return (new DOMParser).parseFromString(str, 'text/xml');
+          }
+       } 
+       
+       function doNothing() {}            
+       
+       
+
+       
+       
+
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkXX66Q7pErKeFvuqbaNgEyHWBsGj0ncA&libraries=places&callback=initMap"
+        async defer></script>
+  </body>
+</html>
