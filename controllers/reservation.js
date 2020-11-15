@@ -283,7 +283,7 @@ angular.module('guestReservation', [])
 
 				$http({
 					method  : 'POST',
-					url     : 'https://www.zaitoon.online/services/desknewcustomerreservation.php',
+					url     : 'https://accelerateengine.app/food-engine/apis/desknewcustomerreservation.php',
 					data    : mydata,
 					headers : {'Content-Type': 'application/x-www-form-urlencoded'}
 				 })
@@ -324,7 +324,7 @@ angular.module('guestReservation', [])
     
     	$scope.outletInfo = "";
     	$scope.getOutletInfo = function(code){
-	      	$http.get("https://zaitoon.online/services/fetchoutlets.php?outletcode="+code).then(function(response) {
+	      	$http.get("https://accelerateengine.app/food-engine/apis/fetchoutlets.php?outletcode="+code).then(function(response) {
 	        	$scope.outletInfo = response.data.response;
 	        	$scope.isPhoto = $scope.outletInfo.pictures.length == 0? false: true;
 		});

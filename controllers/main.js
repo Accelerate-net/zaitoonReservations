@@ -86,7 +86,7 @@ angular.module('guestReservation', ['gm'])
             $scope.outletList = [];
 
             var radius = document.getElementById('cuisine-type').value;
-            var searchUrl = 'https://zaitoon.online/services/branchlocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
+            var searchUrl = 'https://accelerateengine.app/food-engine/apis/branchlocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
             downloadUrl(searchUrl, function(data) {
                 var xml = parseXml(data);
                 var markerNodes = xml.documentElement.getElementsByTagName("marker");

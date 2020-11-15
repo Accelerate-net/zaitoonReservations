@@ -190,7 +190,7 @@
          console.log(center)
 
          var radius = 10; //document.getElementById('radiusSelect').value;
-         var searchUrl = 'https://zaitoon.online/services/branchlocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
+         var searchUrl = 'https://accelerateengine.app/food-engine/apis/branchlocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
          downloadUrl(searchUrl, function(data) {
          console.log('Called BranchLocator API : '+searchUrl)
            var xml = parseXml(data);
